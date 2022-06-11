@@ -17,6 +17,7 @@ set -o errexit
 
 use_ovn_rpm=$1
 extra_optimize=$2
+jemalloc_version=$3
 
 if [ "$extra_optimize" = "yes" ]; then
     cflags='-g -march=native -O3 -fno-omit-frame-pointer'
@@ -30,11 +31,26 @@ if [ "$use_ovn_rpm" = "yes" ]; then
 else
     mkdir -p /root/ovsdb-etcd/schemas
 
+    if [ -n "${jemalloc_version}" ]; then
+        git clone --depth 1 --branch "${jemalloc_version}" \
+            https://github.com/jemalloc/jemalloc.git
+        cd ./jemalloc
+        ./autogen.sh
+        make -j$(($(nproc) + 1)) V=0
+        make install
+        ldconfig
+        libs="-L`jemalloc-config --libdir` "
+        libs=${libs}"-Wl,-rpath,`jemalloc-config --libdir` "
+        libs=${libs}"-ljemalloc `jemalloc-config --libs`"
+        make distclean
+    fi
+
     # Build OVS binaries and install them.
     cd /ovs
     ./boot.sh
     ./configure --localstatedir="/var" --sysconfdir="/etc" --prefix="/usr" \
-    --enable-ssl --disable-libcapng --enable-Werror CFLAGS="${cflags}"
+                --enable-ssl --disable-libcapng --enable-Werror \
+                CFLAGS="${cflags}" LIBS="${libs}"
     make -j$(($(nproc) + 1)) V=0
     make install
     cp ./ovsdb/_server.ovsschema /root/ovsdb-etcd/schemas/
@@ -48,15 +64,15 @@ else
     # build. Note: no explicit install is needed here.
     ./boot.sh
     ./configure --localstatedir="/var" --sysconfdir="/etc" --prefix="/usr" \
-    --enable-ssl --disable-libcapng --enable-Werror CFLAGS="${cflags}"
+                --enable-ssl --disable-libcapng --enable-Werror \
+                CFLAGS="${cflags}" LIBS="${libs}"
     make -j$(($(nproc) + 1)) V=0
 
     cd /ovn
     # build and install
     ./boot.sh
     ./configure --localstatedir="/var" --sysconfdir="/etc" --prefix="/usr" \
-    --enable-ssl \
-    CFLAGS="${cflags}"
+                --enable-ssl CFLAGS="${cflags}" LIBS="${libs}"
     make -j$(($(nproc) + 1)) V=0
     make install
     cp ./ovn-nb.ovsschema /root/ovsdb-etcd/schemas/
