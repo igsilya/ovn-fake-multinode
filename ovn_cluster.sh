@@ -15,6 +15,7 @@ RELAY_IMAGE="ovn/ovn-multi-node"
 
 USE_OVN_RPMS="${USE_OVN_RPMS:-no}"
 EXTRA_OPTIMIZE="${EXTRA_OPTIMIZE:-no}"
+JEMALLOC_VERSION="${JEMALLOC_VERSION:-}"
 OS_IMAGE=${OS_IMAGE:-"quay.io/fedora/fedora:35"}
 OS_IMAGE_PULL_RETRIES=${OS_IMAGE_PULL_RETRIES:-40}
 OS_IMAGE_PULL_INTERVAL=${OS_IMAGE_PULL_INTERVAL:-5}
@@ -795,6 +796,7 @@ function build-images() {
     ${RUNC_CMD} build -t ovn/ovn-multi-node --build-arg OVS_SRC_PATH=ovs \
     --build-arg OVN_SRC_PATH=ovn --build-arg USE_OVN_RPMS=${USE_OVN_RPMS} \
     --build-arg EXTRA_OPTIMIZE=${EXTRA_OPTIMIZE} \
+    --build-arg JEMALLOC_VERSION="${JEMALLOC_VERSION}" \
     --build-arg INSTALL_UTILS_FROM_SOURCES=${INSTALL_UTILS_FROM_SOURCES} \
     --build-arg USE_OVSDB_ETCD=${USE_OVSDB_ETCD} \
     -f  fedora/ovn/Dockerfile .
