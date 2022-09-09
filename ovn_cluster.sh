@@ -130,6 +130,7 @@ function check-no-containers {
 function start-container() {
   local image=$1
   local name=$2
+  local extra=$3
   local vagrant_mount=""
 
   local volumes run_cmd
@@ -140,7 +141,7 @@ function start-container() {
   fi
 
   ${RUNC_CMD} run  -dt ${volumes} -v "${FAKENODE_MNT_DIR}:/data" --privileged \
-              $vagrant_mount --name="${name}" --hostname="${name}" \
+              $vagrant_mount ${extra} --name="${name}" --hostname="${name}" \
               "${image}" > /dev/null
 
   # Make sure ipv6 in container is enabled if we will be using it
@@ -480,9 +481,9 @@ function start() {
     # Create containers
     if [ "$ovn_central" == "yes" ]; then
         if [ "$OVN_DB_CLUSTER" = "yes" ]; then
-            start-container "${CENTRAL_IMAGE}" "${CENTRAL_NAME}-1"
-            start-container "${CENTRAL_IMAGE}" "${CENTRAL_NAME}-2"
-            start-container "${CENTRAL_IMAGE}" "${CENTRAL_NAME}-3"
+            start-container "${CENTRAL_IMAGE}" "${CENTRAL_NAME}-1" "--cpuset-mems=0"
+            start-container "${CENTRAL_IMAGE}" "${CENTRAL_NAME}-2" "--cpuset-mems=0"
+            start-container "${CENTRAL_IMAGE}" "${CENTRAL_NAME}-3" "--cpuset-mems=0"
         else
             start-container "${CENTRAL_IMAGE}" "${CENTRAL_NAME}"
         fi
