@@ -27,7 +27,7 @@ jobs:
           sudo apt update
           sudo apt install podman openvswitch-switch
       - name: Build images
-        run: sudo -E ./ovn_cluster.sh build
+        run: sudo -E XDG_RUNTIME_DIR= ./ovn_cluster.sh build
       - name: Start basic cluster
         run: sudo -E ./ovn_cluster.sh start
       - name: Run basic test script
